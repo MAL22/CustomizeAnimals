@@ -78,16 +78,21 @@ namespace CustomizeAnimals.Settings
 		{
 			var boolValue = DisableRescueSizeLimit;
 			Scribe_Values.Look(ref boolValue, "DisableRescueSizeLimit", false);
-			DisableHaulSizeLimit = boolValue;
+			DisableRescueSizeLimit = boolValue;
 
 			boolValue = DisableHaulSizeLimit;
 			Scribe_Values.Look(ref boolValue, "DisableHaulSizeLimit", false);
-			DisableRescueSizeLimit = boolValue;
+			DisableHaulSizeLimit = boolValue;
 
 
 			var floatValue = TrainingDecayFactor;
 			Scribe_Values.Look(ref floatValue, "TrainingDecayFactor", DefaultTrainingDecayFactor);
 			TrainingDecayFactor = floatValue;
+
+
+			boolValue = CarryingCapacityAffectsMassCapacity;
+			Scribe_Values.Look(ref boolValue, "CarryingCapacityAffectsMassCapacity", false);
+			CarryingCapacityAffectsMassCapacity = boolValue;
 
 
 			floatValue = EggMassFactor;

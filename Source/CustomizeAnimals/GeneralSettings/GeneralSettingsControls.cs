@@ -96,7 +96,7 @@ namespace CustomizeAnimals.Controls
 			offsetY += SettingsRowHeight;
 
 
-			// Trainable Limits Label
+			// Carrying Capacity affects Mass Capacity Label
 			if (Settings.CarryingCapacityAffectsMassCapacity)
 				GUI.color = ModifiedColor;
 			Widgets.Label(new Rect(offsetX, offsetY, controlWidth, SettingsRowHeight), "SY_CA.CarryingCapacity".Translate());
