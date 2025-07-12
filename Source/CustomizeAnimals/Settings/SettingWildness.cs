@@ -9,7 +9,7 @@ using Verse;
 
 namespace CustomizeAnimals.Settings
 {
-	internal class SettingWildness : BaseSetting<float>
+	internal class SettingWildness : NullableFloatSetting
 	{
 		#region PROPERTIES
 		public const float DefaultMinimum = 0f;
@@ -18,24 +18,17 @@ namespace CustomizeAnimals.Settings
 
 		#region CONSTRUCTORS
 		public SettingWildness(ThingDef animal, bool isGlobal = false) : base(animal, isGlobal)
-		{ }
+		{
+			if (DefaultValue == null)
+				DefaultValue = StatDefOf.Wildness.defaultBaseValue;
+		}
 		#endregion
 
 		#region INTERFACES
-		public override void GetValue()
-		{
-			var race = Animal?.race;
-			if (race != null)
-				Value = race.wildness;
-			else if (!IsGlobal)
-				Log.Warning($"{nameof(CustomizeAnimals)}.{nameof(SettingWildness)}: {Animal?.defName} race is null, value cannot be set!");
-		}
-		public override void SetValue()
-		{
-			var race = Animal?.race;
-			if (race != null)
-				race.wildness = Value;
-		}
+		public override void GetValue() =>
+			Value = GetStat(StatDefOf.Wildness, false);
+		public override void SetValue() =>
+			SetStat(StatDefOf.Wildness, Value ?? StatDefOf.Wildness.defaultBaseValue, Animal.IsAnimal(), DefaultMinimum, DefaultMaximum);
 
 		public override void ExposeData()
 		{
@@ -43,6 +36,9 @@ namespace CustomizeAnimals.Settings
 			Scribe_Values.Look(ref value, "Wildness", DefaultValue);
 			Value = value;
 		}
+
+		public override bool IsModified() =>
+			!(DefaultValue?.Equals(Value ?? StatDefOf.Wildness.defaultBaseValue) == true);
 		#endregion
 	}
 }

@@ -285,7 +285,58 @@ namespace CustomizeAnimals.Controls
 				value = defaultValue;
 				valueBuffer = null;
 			}
+			return value;
+		}
 
+		protected (T A, T B) CreateDualNumeric<T>(
+			float offsetY,
+			float viewWidth,
+			string label,
+			string tooltip,
+			bool isModified,
+			(T A, T B) value,
+			(T A, T B) defaultValue,
+			ref string valueBufferA,
+			ref string valueBufferB,
+			float min = 0f,
+			float max = 1e+9f,
+			ConvertDelegate<T> convert = null,
+			string unit = null) 
+			where T : struct
+		{
+			var controlWidth = GetControlWidth(viewWidth);
+
+			// Label
+			if (isModified)
+				GUI.color = ModifiedColor;
+			Widgets.Label(new Rect(0, offsetY, controlWidth - 8, SettingsRowHeight), label);
+			GUI.color = OriColor;
+
+			var halfWidth = (controlWidth - 4) / 2;
+
+			// Setting
+			var textFieldRect = new Rect(controlWidth + 2, offsetY + 6, halfWidth, SettingsRowHeight - 12);
+			Widgets.TextFieldNumeric(textFieldRect, ref value.A, ref valueBufferA, min, max);
+			// Unit
+			DrawTextFieldUnit(textFieldRect, convert != null ? (T?)convert(value.A) : value.A, unit);
+
+			// Setting
+			textFieldRect = new Rect(controlWidth + 2 + halfWidth, offsetY + 6, halfWidth, SettingsRowHeight - 12);
+			Widgets.TextFieldNumeric(textFieldRect, ref value.B, ref valueBufferB, min, max);
+			// Unit
+			DrawTextFieldUnit(textFieldRect, convert != null ? (T?)convert(value.B) : value.B, unit);
+
+			// Tooltip
+			var fullRect = new Rect(controlWidth + 2, offsetY + 6, controlWidth - 4, SettingsRowHeight - 12);
+			if (!string.IsNullOrWhiteSpace(tooltip))
+				DrawTooltip(fullRect, tooltip);
+
+			// Reset button
+			if (isModified && DrawResetButton(offsetY, viewWidth, $"{defaultValue.A}~{defaultValue.B}"))
+			{
+				value = defaultValue;
+				valueBufferA = valueBufferB = null;
+			}
 			return value;
 		}
 
@@ -536,6 +587,56 @@ namespace CustomizeAnimals.Controls
 					ref buffer[i],
 					convert: convert,
 					unit: unit);
+				totalHeight += SettingsRowHeight;
+			}
+			Text.Anchor = TextAnchor.MiddleLeft;
+		}
+
+		protected void CreateRangeArraySetting<T, V>(
+			ref float totalHeight,
+			ref float viewWidth,
+			string label,
+			string tooltip,
+			T[] array,
+			T[] defaultArray,
+			ref string[] buffer,
+			Func<T, (V A, V B)> toValues,
+			Func<(V A, V B), T> toRange,
+			int startingIndex = 0,
+			string[] sublabels = null,
+			ConvertDelegate<V> convert = null,
+			string unit = null)
+			where V : struct
+		{
+			Widgets.Label(new Rect(16f, totalHeight, viewWidth, SettingsRowHeight), label);
+			totalHeight += SettingsRowHeight;
+
+			var length = Mathf.Min(array.Length, defaultArray.Length);
+			if (buffer == null)
+				buffer = new string[length * 2];
+
+			for (int i = startingIndex; i < length; i++)
+			{
+				Text.Anchor = TextAnchor.MiddleRight;
+
+				var value = toValues(array[i]);
+				var defaultValue = toValues(defaultArray[i]);
+
+				value = CreateDualNumeric(
+					totalHeight,
+					viewWidth,
+					i < sublabels?.Length ? sublabels[i] : i.ToString(),
+					tooltip,
+					!value.Equals(defaultValue),
+					value,
+					defaultValue,
+					ref buffer[i],
+					ref buffer[i + length],
+					convert: convert,
+					unit: unit);
+
+				array[i] = toRange(value);
+
 				totalHeight += SettingsRowHeight;
 			}
 			Text.Anchor = TextAnchor.MiddleLeft;

@@ -1,10 +1,10 @@
-﻿using RimWorld;
+﻿using HarmonyLib;
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using UnityEngine;
 using Verse;
 
 namespace CustomizeAnimals.Settings
@@ -17,8 +17,8 @@ namespace CustomizeAnimals.Settings
 		public static float[] GrowthTierPointsRequirements { get; set; }
 
 		// Applied directly via GrowthUtility.PassionGainsPerTier
-		public static int[] DefaultPassionGainsPerTier { get; private set; }
-		public static int[] PassionGainsPerTier { get; set; }
+		public static ByteRange[] DefaultPassionGainsPerTier { get; private set; }
+		public static ByteRange[] PassionGainsPerTier { get; set; }
 
 		// Applied directly via GrowthUtility.PassionChoicesPerTier
 		public static int[] DefaultPassionChoicesPerTier { get; private set; }
@@ -57,11 +57,13 @@ namespace CustomizeAnimals.Settings
 			if (Animal.IsAnimal())
 				return;
 
-			GrowthTierPointsRequirements = GrowthUtility.GrowthTierPointsRequirements.ToArray();
-			PassionGainsPerTier = GrowthUtility.PassionGainsPerTier.ToArray();
-			PassionChoicesPerTier = GrowthUtility.PassionChoicesPerTier.ToArray();
-			TraitGainsPerTier = GrowthUtility.TraitGainsPerTier.ToArray();
-			TraitChoicesPerTier = GrowthUtility.TraitChoicesPerTier.ToArray();
+			var growthTiers = GrowthUtility.GrowthTiers;
+
+			GrowthTierPointsRequirements = growthTiers.Select(t => t.pointsRequirement).ToArray();
+			PassionGainsPerTier = growthTiers.Select(t => t.passionGainsRange).ToArray();
+			PassionChoicesPerTier = growthTiers.Select(t => (int)t.passionChoices).ToArray();
+			TraitGainsPerTier = growthTiers.Select(t => (int)t.traitGains).ToArray();
+			TraitChoicesPerTier = growthTiers.Select(t => (int)t.traitChoices).ToArray();
 
 			GrowthMomentAges = new int[GrowthUtility.GrowthMomentAges.Length + 1];
 			GrowthMomentAges[0] = 3; // this value is hardcoded (Pawn_AgeTracker.TrySimulateGrowthPoints)
@@ -77,11 +79,20 @@ namespace CustomizeAnimals.Settings
 				Log.Error($"{nameof(CustomizeAnimals)}: Unexpected value for {nameof(GrowthTierPointsRequirements)}[0]: '{GrowthTierPointsRequirements[0]}', should be 0; correcting to 0 now");
 				GrowthTierPointsRequirements[0] = 0;
 			}
-			GrowthUtility.GrowthTierPointsRequirements.SetFrom(GrowthTierPointsRequirements);
-			GrowthUtility.PassionGainsPerTier.SetFrom(PassionGainsPerTier);
-			GrowthUtility.PassionChoicesPerTier.SetFrom(PassionChoicesPerTier);
-			GrowthUtility.TraitGainsPerTier.SetFrom(TraitGainsPerTier);
-			GrowthUtility.TraitChoicesPerTier.SetFrom(TraitChoicesPerTier);
+
+			var growthTiers = GrowthUtility.GrowthTiers;
+			for (int i = 0; i < growthTiers.Length; i++)
+			{
+				var growthTier = growthTiers[i];
+				var type = growthTier.GetType();
+				// set readonly fields
+				AccessTools.Field(type, nameof(growthTier.pointsRequirement)).SetValue(growthTier, GrowthTierPointsRequirements[i]);
+				AccessTools.Field(type, nameof(growthTier.passionGainsRange)).SetValue(growthTier, PassionGainsPerTier[i]);
+				AccessTools.Field(type, nameof(growthTier.passionChoices)).SetValue(growthTier, (byte)PassionChoicesPerTier[i]);
+				AccessTools.Field(type, nameof(growthTier.traitGains)).SetValue(growthTier, (byte)TraitGainsPerTier[i]);
+				AccessTools.Field(type, nameof(growthTier.traitChoices)).SetValue(growthTier, (byte)TraitChoicesPerTier[i]);
+			}
+
 			ApplyGrowthMomentAges(GrowthMomentAges);
 		}
 
@@ -97,7 +108,7 @@ namespace CustomizeAnimals.Settings
 		public override bool IsModified()
 		{
 			if (GrowthTierPointsRequirements.IsDifferent(DefaultGrowthTierPointsRequirements)
-				|| PassionGainsPerTier.IsDifferent(DefaultPassionGainsPerTier)
+				|| PassionGainsPerTier.Compare(DefaultPassionGainsPerTier, (a, b) => a != b)
 				|| PassionChoicesPerTier.IsDifferent(DefaultPassionChoicesPerTier)
 				|| TraitGainsPerTier.IsDifferent(DefaultTraitGainsPerTier)
 				|| TraitChoicesPerTier.IsDifferent(DefaultTraitChoicesPerTier)
@@ -114,9 +125,8 @@ namespace CustomizeAnimals.Settings
 				GrowthTierPointsRequirements,
 				DefaultGrowthTierPointsRequirements);
 
-			CustomizeAnimalsUtility.ExposeArray(
-				"PassionGainsPerTier",
-				() => PassionGainsPerTier.IsDifferent(DefaultPassionGainsPerTier),
+			CustomizeAnimalsUtility.ExposeByteRangeArray(
+				"PassionGainsPerTierMin",
 				PassionGainsPerTier,
 				DefaultPassionGainsPerTier);
 

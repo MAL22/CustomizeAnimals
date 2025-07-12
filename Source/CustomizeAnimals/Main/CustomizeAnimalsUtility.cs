@@ -4,14 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 using Verse;
+using static Mono.Security.X509.X509Stores;
 
 namespace CustomizeAnimals
 {
 	internal static class CustomizeAnimalsUtility
 	{
 		public static void SetFrom<T>(this T[] to, T[] from, int toOffset = 0, int fromOffset = 0)
-			where T : IComparable
 		{
 			if (from == null || to == null)
 				return;
@@ -25,6 +26,15 @@ namespace CustomizeAnimals
 			if (a != null && b != null)
 				for (int i = 0; i < a.Length && i < b.Length; i++)
 					if (a[i].CompareTo(b[i]) != 0)
+						return true;
+			return false;
+		}
+
+		public static bool Compare<T>(this T[] a, T[] b, Func<T, T, bool> comp)
+		{
+			if (a != null && b != null)
+				for (int i = 0; i < a.Length && i < b.Length; i++)
+					if (comp(a[i], b[i]))
 						return true;
 			return false;
 		}
@@ -45,6 +55,40 @@ namespace CustomizeAnimals
 					}
 					Scribe.ExitNode();
 				}
+			}
+		}
+
+		public static void ExposeByteRangeArray(string nodeName, ByteRange[] values, ByteRange[] defaultValues, string[] names = null)
+		{
+			if (Scribe.mode != LoadSaveMode.Saving || isModified())
+			{
+				if (Scribe.EnterNode(nodeName))
+				{
+					for (int i = 0; i < values.Length; i++)
+					{
+						var value = values[i];
+						var defaultValue = i < defaultValues?.Length ? defaultValues[i] : default;
+						var name = i < names?.Length ? names[i] : $"Value_{i}";
+
+						Scribe_Values.Look(ref value.min, name + "_min", defaultValue.min);
+						Scribe_Values.Look(ref value.max, name + "_max", defaultValue.max);
+
+						values[i] = value;
+					}
+					Scribe.ExitNode();
+				}
+			}
+			bool isModified()
+			{
+				if (values.Length != defaultValues.Length)
+					return true;
+				for (int i = 0; i < values.Length; i++)
+				{
+					if (values[i].min != defaultValues[i].min
+						|| values[i].max != defaultValues[i].max)
+						return true;
+				}
+				return false;
 			}
 		}
 

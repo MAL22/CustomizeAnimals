@@ -50,14 +50,16 @@ namespace CustomizeAnimals.Controls
 				startingIndex: 1);
 
 			// Passion Gains Per Tier
-			CreateArraySetting(
+			CreateRangeArraySetting(
 				ref totalHeight,
 				ref viewWidth,
 				"SY_CA.PassionGainsPerTier".Translate(),
 				"SY_CA.TooltipPassionGainsPerTier".Translate(),
 				SpecialSettingGrowthTier.PassionGainsPerTier,
 				SpecialSettingGrowthTier.DefaultPassionGainsPerTier,
-				ref PassionGainsPerTierBuffers);
+				ref PassionGainsPerTierBuffers,
+				range => ((int)range.min, range.max),
+				v => new ByteRange((byte)v.A, (byte)v.B));
 
 			// Passion Choices Per Tier
 			CreateArraySetting(

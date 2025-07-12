@@ -14,12 +14,14 @@ namespace CustomizeAnimals.Controls
 	{
 		public override float CreateSetting(float offsetY, float viewWidth, AnimalSettings animalSettings)
 		{
-			var setting = (BaseSetting<float>)animalSettings.GeneralSettings["Wildness"];
-			var value = CreateNumeric(
+			var setting = (NullableFloatSetting)animalSettings.GeneralSettings["Wildness"];
+			var value = CreateNullableNumeric(
 				offsetY,
 				viewWidth,
 				"SY_CA.Wildness".Translate(),
+				"SY_CA.WildnessDisabled".Translate(),
 				"SY_CA.TooltipWildness".Translate(),
+				"SY_CA.TooltipWildnessChk".Translate(),
 				setting.IsModified(),
 				setting.Value,
 				setting.DefaultValue,

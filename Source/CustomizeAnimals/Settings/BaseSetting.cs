@@ -89,7 +89,7 @@ namespace CustomizeAnimals.Settings
 			}
 
 			if (!IsGlobal)
-				Log.Warning($"{nameof(CustomizeAnimals)}.{GetType()}: {Animal?.defName} statBases is null, value cannot be set!");
+				Log.Warning($"{nameof(CustomizeAnimals)}.{GetType()}.{nameof(GetStat)}: '{Animal?.defName}' statBases is null, cannot get stat: animal: {Animal} stat: {stat}");
 			return null;
 		}
 		protected virtual void SetStat(StatDef stat, bool useLimits = false, float min = 0f, float? max = 1e9f, float modifier = 1f) =>
@@ -98,7 +98,7 @@ namespace CustomizeAnimals.Settings
 		{
 			if (Animal == null || stat == null)
 			{
-				Log.Error($"{nameof(CustomizeAnimals)}.{GetType()}.{nameof(SetStat)}: invalid parameters: animal: {Animal} stat: {stat}");
+				Log.Error($"{nameof(CustomizeAnimals)}.{GetType()}.{nameof(SetStat)}: '{Animal?.defName}' invalid parameters: animal: {Animal} stat: {stat}");
 				return;
 			}
 
