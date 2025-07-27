@@ -84,13 +84,28 @@ namespace CustomizeAnimals.Settings
 			for (int i = 0; i < growthTiers.Length; i++)
 			{
 				var growthTier = growthTiers[i];
-				var type = growthTier.GetType();
-				// set readonly fields
-				AccessTools.Field(type, nameof(growthTier.pointsRequirement)).SetValue(growthTier, GrowthTierPointsRequirements[i]);
-				AccessTools.Field(type, nameof(growthTier.passionGainsRange)).SetValue(growthTier, PassionGainsPerTier[i]);
-				AccessTools.Field(type, nameof(growthTier.passionChoices)).SetValue(growthTier, (byte)PassionChoicesPerTier[i]);
-				AccessTools.Field(type, nameof(growthTier.traitGains)).SetValue(growthTier, (byte)TraitGainsPerTier[i]);
-				AccessTools.Field(type, nameof(growthTier.traitChoices)).SetValue(growthTier, (byte)TraitChoicesPerTier[i]);
+				var pointsRequirements = GrowthTierPointsRequirements[i];
+				var passionGainsRange = PassionGainsPerTier[i];
+				var passionChoices = (byte)PassionChoicesPerTier[i];
+				var traitGains = (byte)TraitGainsPerTier[i];
+				var traitChoices = (byte)TraitChoicesPerTier[i];
+
+				// check for changes
+				if (growthTier.pointsRequirement != pointsRequirements
+					|| growthTier.passionGainsRange != passionGainsRange
+					|| growthTier.passionChoices != passionChoices
+					|| growthTier.traitGains != traitGains
+					|| growthTier.traitChoices != traitChoices)
+				{
+					// apply changes
+					growthTiers[i] = new GrowthUtility.GrowthTier(
+						(byte)i,
+						pointsRequirements,
+						passionGainsRange,
+						passionChoices,
+						traitGains,
+						traitChoices);
+				}
 			}
 
 			ApplyGrowthMomentAges(GrowthMomentAges);
@@ -167,9 +182,9 @@ namespace CustomizeAnimals.Settings
 		// Growth Moments are not set via GrowthUtility.GrowthMomentAges,
 		//  but use the Pawn_AgeTracker.growthMomentAges instead for some reason.
 		//  So, that list needs to be adjusted to actually apply the changes.
-		private void ApplyGrowthMomentAges(int[] moments)
+		private static void ApplyGrowthMomentAges(int[] moments)
 		{
-			GrowthUtility.GrowthMomentAges.SetFrom(GrowthMomentAges, fromOffset: 1); // skip first (Baby)!
+			GrowthUtility.GrowthMomentAges.SetFrom(moments, fromOffset: 1); // skip first (Baby)
 
 			if (Pawn_AgeTracker.growthMomentAges == null)
 				Pawn_AgeTracker.growthMomentAges = new List<int>(moments);
